@@ -46,9 +46,13 @@ npm run db:seed        # Populate with sample data
 
 ### 5. ✅ Database Seed (`prisma/seed.ts`)
 Created seeding script that generates:
-- 1 demo admin user (admin@example.com)
+- 1 demo admin user (admin@example.com) with **bcrypt-hashed password**
 - 3 sample blog posts (2 published, 1 draft)
 - Proper data relationships
+
+**Demo Credentials**:
+- Email: `admin@example.com`
+- Password: `Admin123!` (hashed in database)
 
 ### 6. ✅ Configuration Files
 - `prisma.config.ts` - Updated to load environment variables
@@ -155,12 +159,18 @@ const updated = await prisma.post.update({
 
 ## Important Security Notes
 
-⚠️ **Password Hashing**: The seed file uses plain text passwords for demo purposes only. In production, always use bcrypt:
+✅ **Password Hashing**: ✅ **IMPLEMENTED!** Passwords are now securely hashed with bcrypt:
 
 ```typescript
+// Seed file now uses bcrypt (prisma/seed.ts)
 import bcrypt from "bcrypt";
-const hashedPassword = await bcrypt.hash(password, 10);
+const hashedPassword = await bcrypt.hash("Admin123!", 10);
+
+// Authentication utilities available (src/lib/auth.ts)
+import { hashPassword, verifyPassword } from "@/lib/auth";
 ```
+
+**See `AUTHENTICATION_SETUP.md` for complete authentication documentation.**
 
 ⚠️ **Environment Variables**: Never commit `.env` to version control. Use `.env.example` for documentation.
 

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LoginForm } from "@/components/LoginForm";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Admin Login",
@@ -10,7 +13,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Redirect if already logged in
+  const session = await getSession();
+  if (session) {
+    redirect("/admin/dashboard");
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-50 to-white px-4 dark:from-zinc-950 dark:to-zinc-900">
       <div className="w-full max-w-md">
@@ -39,55 +48,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="mb-8 rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
-            <p className="text-center text-sm text-blue-800 dark:text-blue-200">
-              🚧 Authentication coming soon! This is a placeholder page.
-            </p>
-          </div>
-
-          <form className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-zinc-900 dark:text-zinc-50"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                disabled
-                className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-3 text-zinc-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-                placeholder="admin@example.com"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-zinc-900 dark:text-zinc-50"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                disabled
-                className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-3 text-zinc-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled
-              className="w-full cursor-not-allowed rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 font-semibold text-white opacity-50 transition-all"
-            >
-              Sign In (Coming Soon)
-            </button>
-          </form>
+          <LoginForm />
 
           <div className="mt-6 text-center">
             <Link
@@ -99,10 +60,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          This page is part of the learning project. Authentication will be implemented in a
-          future step.
-        </p>
+        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <p className="text-center text-xs text-zinc-600 dark:text-zinc-400">
+            🔐 Secured with bcrypt password hashing and JWT session management
+          </p>
+        </div>
       </div>
     </div>
   );

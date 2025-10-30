@@ -1,24 +1,30 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Starting database seed...");
 
-  // Create a demo admin user
-  // Note: In production, you should hash passwords using bcrypt or similar
+  // Hash the demo password securely
+  const hashedPassword = await bcrypt.hash("Admin123!", 10);
+
+  // Create a demo admin user with hashed password
   const user = await prisma.user.upsert({
     where: { email: "admin@example.com" },
     update: {},
     create: {
       email: "admin@example.com",
-      password: "demo-password-please-hash-in-production",
+      password: hashedPassword,
       name: "Admin User",
     },
   });
 
   console.log("✅ Created user:", user.email);
+  console.log("🔐 Login credentials:");
+  console.log("   Email: admin@example.com");
+  console.log("   Password: Admin123!");
 
   // Create demo blog posts
   const posts = await Promise.all([

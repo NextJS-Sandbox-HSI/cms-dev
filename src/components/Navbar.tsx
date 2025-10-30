@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { logoutAction } from "@/actions/auth";
 
-export function Navbar() {
+interface NavbarProps {
+  user?: {
+    email: string;
+    name: string | null;
+  } | null;
+}
+
+export function Navbar({ user }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -47,12 +55,36 @@ export function Navbar() {
             >
               About
             </Link>
-            <Link
-              href="/login"
-              className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-700 hover:to-purple-700 hover:shadow-lg hover:shadow-blue-500/30"
-            >
-              Admin Login
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/admin/dashboard"
+                  className="text-sm font-medium text-zinc-700 transition-colors hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400"
+                >
+                  Dashboard
+                </Link>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {user.name || user.email}
+                  </span>
+                  <form action={logoutAction}>
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-750"
+                    >
+                      Logout
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-700 hover:to-purple-700 hover:shadow-lg hover:shadow-blue-500/30"
+              >
+                Admin Login
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -113,13 +145,38 @@ export function Navbar() {
               >
                 About
               </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-base font-semibold text-white transition-all hover:from-blue-700 hover:to-purple-700"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Admin Login
-              </Link>
+              {user ? (
+                <>
+                  <Link
+                    href="/admin/dashboard"
+                    className="text-base font-medium text-zinc-700 transition-colors hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Signed in as {user.name || user.email}
+                    </span>
+                    <form action={logoutAction}>
+                      <button
+                        type="submit"
+                        className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-750"
+                      >
+                        Logout
+                      </button>
+                    </form>
+                  </div>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-base font-semibold text-white transition-all hover:from-blue-700 hover:to-purple-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Admin Login
+                </Link>
+              )}
             </div>
           </div>
         )}
