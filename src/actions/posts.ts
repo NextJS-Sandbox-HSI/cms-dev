@@ -11,6 +11,21 @@ export interface PostActionResult {
   postId?: string;
 }
 
+export interface PaginatedPostsResult {
+  posts: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    publishedAt: Date | null;
+    author: {
+      name: string | null;
+      email: string;
+    };
+  }>;
+  hasMore: boolean;
+}
+
 /**
  * Generate URL-friendly slug from title
  */
@@ -361,6 +376,57 @@ export async function togglePublishAction(postId: string): Promise<PostActionRes
     return {
       success: false,
       error: "An error occurred while updating the post status. Please try again.",
+    };
+  }
+}
+
+/**
+ * Server action to fetch paginated published posts
+ * Used for infinite scroll on the homepage
+ */
+export async function getPaginatedPosts(
+  page: number = 0,
+  pageSize: number = 20
+): Promise<PaginatedPostsResult> {
+  try {
+    // Calculate skip value for pagination
+    const skip = page * pageSize;
+
+    // Fetch posts with limit + 1 to check if there are more
+    const posts = await prisma.post.findMany({
+      where: {
+        published: true,
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        publishedAt: "desc",
+      },
+      skip,
+      take: pageSize + 1, // Fetch one extra to determine if there are more
+    });
+
+    // Check if there are more posts
+    const hasMore = posts.length > pageSize;
+
+    // Return only the requested number of posts
+    const paginatedPosts = hasMore ? posts.slice(0, pageSize) : posts;
+
+    return {
+      posts: paginatedPosts,
+      hasMore,
+    };
+  } catch (error) {
+    console.error("Get paginated posts error:", error);
+    return {
+      posts: [],
+      hasMore: false,
     };
   }
 }

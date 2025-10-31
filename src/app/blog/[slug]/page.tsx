@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { formatDistanceToNow } from "date-fns";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -150,10 +151,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </header>
 
         {/* Article Content */}
-        <div className="prose prose-zinc prose-lg mx-auto dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-zinc-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-[''] prose-code:after:content-[''] dark:prose-code:bg-zinc-800 prose-pre:bg-zinc-900 prose-pre:text-zinc-100 dark:prose-pre:bg-zinc-950">
-          {/* Render markdown content (for now, just displaying as text) */}
-          <div className="whitespace-pre-wrap break-words">{post.content}</div>
-        </div>
+        <MarkdownRenderer content={post.content} />
 
         {/* Article Footer */}
         <footer className="mt-12 border-t border-zinc-200 pt-8 dark:border-zinc-800">
