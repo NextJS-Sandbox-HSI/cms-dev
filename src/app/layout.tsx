@@ -4,6 +4,7 @@ import "./globals.css";
 import "highlight.js/styles/atom-one-dark.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CommandPalette } from "@/components/CommandPalette/CommandPalette";
 import { getSession } from "@/lib/session";
 
 const geistSans = Geist({
@@ -69,6 +70,7 @@ export default async function RootLayout({
         />
         <main className="flex-1">{children}</main>
         <Footer />
+        <CommandPalette />
       </body>
     </html>
   );

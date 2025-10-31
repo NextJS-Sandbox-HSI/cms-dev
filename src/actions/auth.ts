@@ -1,17 +1,22 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, validateEmail } from "@/lib/auth";
+import { verifyPassword } from "@/lib/auth";
 import {
   createSession,
   setSessionCookie,
   deleteSessionCookie,
 } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { loginSchema } from "@/schemas";
 
 export interface LoginResult {
   success: boolean;
   error?: string;
+  fieldErrors?: {
+    email?: string[];
+    password?: string[];
+  };
 }
 
 /**
@@ -22,24 +27,24 @@ export async function loginAction(
   formData: FormData
 ): Promise<LoginResult> {
   try {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    // Extract raw data
+    const rawData = {
+      email: formData.get("email"),
+      password: formData.get("password"),
+    };
 
-    // Validate inputs
-    if (!email || !password) {
+    // Validate with Zod
+    const validation = loginSchema.safeParse(rawData);
+
+    if (!validation.success) {
       return {
         success: false,
-        error: "Email and password are required",
+        error: validation.error.issues[0].message,
+        fieldErrors: validation.error.flatten().fieldErrors,
       };
     }
 
-    // Validate email format
-    if (!validateEmail(email)) {
-      return {
-        success: false,
-        error: "Invalid email format",
-      };
-    }
+    const { email, password } = validation.data;
 
     // Find user by email
     const user = await prisma.user.findUnique({

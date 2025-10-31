@@ -1,31 +1,52 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { loginAction, type LoginResult } from "@/actions/auth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginInput } from "@/schemas";
+import { loginAction } from "@/actions/auth";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 export function LoginForm() {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState<LoginResult | null, FormData>(
-    loginAction,
-    null
-  );
+  const [isPending, startTransition] = useTransition();
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  // Redirect to admin dashboard on successful login
-  useEffect(() => {
-    if (state?.success) {
-      router.push("/admin/dashboard");
-      router.refresh();
-    }
-  }, [state?.success, router]);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur", // Validate on blur for better UX
+  });
+
+  const onSubmit = async (data: LoginInput) => {
+    setServerError(null);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      const result = await loginAction(null, formData);
+
+      if (result.success) {
+        router.push("/admin/dashboard");
+        router.refresh();
+      } else {
+        setServerError(result.error || "Login failed");
+      }
+    });
+  };
 
   return (
-    <form action={formAction} className="space-y-6">
-      {/* Error Message */}
-      {state?.error && (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Server Error */}
+      {serverError && (
         <div className="rounded-lg bg-red-50 p-4 dark:bg-red-950/20">
           <p className="text-sm font-medium text-red-800 dark:text-red-200">
-            {state.error}
+            {serverError}
           </p>
         </div>
       )}
@@ -39,15 +60,19 @@ export function LoginForm() {
           Email
         </label>
         <input
+          {...register("email")}
           type="email"
           id="email"
-          name="email"
-          required
           disabled={isPending}
           className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 transition-colors placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500"
           placeholder="admin@example.com"
           autoComplete="email"
         />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.email.message}
+          </p>
+        )}
       </div>
 
       {/* Password Field */}
@@ -59,15 +84,19 @@ export function LoginForm() {
           Password
         </label>
         <input
+          {...register("password")}
           type="password"
           id="password"
-          name="password"
-          required
           disabled={isPending}
           className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 transition-colors placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500"
           placeholder="••••••••"
           autoComplete="current-password"
         />
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.password.message}
+          </p>
+        )}
       </div>
 
       {/* Submit Button */}

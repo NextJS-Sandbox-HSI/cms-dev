@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { postSchema, type PostInput } from "@/schemas";
 import type { PostActionResult } from "@/actions/posts";
 
 interface PostFormProps {
@@ -31,38 +34,64 @@ export default function PostForm({
   isEditing = false,
 }: PostFormProps) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState<PostActionResult | null, FormData>(action, null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Local state for form fields to enable character count
-  const [title, setTitle] = useState(initialData.title);
-  const [content, setContent] = useState(initialData.content);
-  const [excerpt, setExcerpt] = useState(initialData.excerpt);
-  const [published, setPublished] = useState(initialData.published);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<PostInput>({
+    resolver: zodResolver(postSchema),
+    mode: "onBlur",
+    defaultValues: {
+      ...initialData,
+      published: initialData.published ?? false,
+    },
+  });
 
-  // Handle successful submission
-  useEffect(() => {
-    if (state?.success) {
-      if (!isEditing) {
-        // For new posts, reset form
-        formRef.current?.reset();
-        setTitle("");
-        setContent("");
-        setExcerpt("");
-        setPublished(false);
+  // Watch form values for character counts
+  const title = watch("title");
+  const content = watch("content");
+  const excerpt = watch("excerpt");
+  const published = watch("published");
+
+  const onSubmit = async (data: PostInput) => {
+    setServerError(null);
+    setSuccessMessage(null);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("content", data.content);
+      formData.append("excerpt", data.excerpt || "");
+      formData.append("published", String(data.published ?? false));
+
+      const result = await action(null, formData);
+
+      if (result.success) {
+        setSuccessMessage(`Post ${isEditing ? "updated" : "created"} successfully! Redirecting...`);
+
+        if (!isEditing) {
+          reset();
+        }
+
+        setTimeout(() => {
+          router.push("/admin/posts");
+        }, 1500);
+      } else {
+        setServerError(result.error || "An error occurred");
       }
-
-      // Navigate to posts list after a short delay to show success message
-      setTimeout(() => {
-        router.push("/admin/posts");
-      }, 1500);
-    }
-  }, [state?.success, router, isEditing]);
+    });
+  };
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Success Message */}
-      {state?.success && (
+      {successMessage && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-900/20">
           <div className="flex">
             <svg
@@ -79,14 +108,14 @@ export default function PostForm({
               />
             </svg>
             <p className="ml-3 text-sm font-medium text-green-800 dark:text-green-200">
-              Post {isEditing ? "updated" : "created"} successfully! Redirecting...
+              {successMessage}
             </p>
           </div>
         </div>
       )}
 
       {/* Error Message */}
-      {state?.error && (
+      {serverError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
           <div className="flex">
             <svg
@@ -103,7 +132,7 @@ export default function PostForm({
               />
             </svg>
             <p className="ml-3 text-sm font-medium text-red-800 dark:text-red-200">
-              {state.error}
+              {serverError}
             </p>
           </div>
         </div>
@@ -118,19 +147,21 @@ export default function PostForm({
           Title <span className="text-red-500">*</span>
         </label>
         <input
+          {...register("title")}
           type="text"
           id="title"
-          name="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
           maxLength={200}
           disabled={isPending}
           className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-zinc-900 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-400 dark:focus:border-blue-400"
           placeholder="Enter a compelling title for your post"
         />
+        {errors.title && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.title.message}
+          </p>
+        )}
         <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-          {title.length}/200 characters
+          {title?.length || 0}/200 characters
         </p>
       </div>
 
@@ -143,18 +174,21 @@ export default function PostForm({
           Excerpt <span className="text-zinc-500">(optional)</span>
         </label>
         <textarea
+          {...register("excerpt")}
           id="excerpt"
-          name="excerpt"
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
           rows={2}
-          maxLength={300}
+          maxLength={500}
           disabled={isPending}
           className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-zinc-900 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-400 dark:focus:border-blue-400"
           placeholder="A brief summary of your post (shown in listings)"
         />
+        {errors.excerpt && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.excerpt.message}
+          </p>
+        )}
         <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-          {excerpt.length}/300 characters
+          {excerpt?.length || 0}/500 characters
         </p>
       </div>
 
@@ -167,30 +201,29 @@ export default function PostForm({
           Content <span className="text-red-500">*</span>
         </label>
         <textarea
+          {...register("content")}
           id="content"
-          name="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
           rows={16}
           disabled={isPending}
           className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 font-mono text-sm text-zinc-900 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-400 dark:focus:border-blue-400"
           placeholder="Write your post content here... (Markdown supported)"
         />
+        {errors.content && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.content.message}
+          </p>
+        )}
         <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-          {content.length} characters · Supports Markdown formatting
+          {content?.length || 0} characters · Supports Markdown formatting
         </p>
       </div>
 
       {/* Published Checkbox */}
       <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
         <input
+          {...register("published")}
           type="checkbox"
           id="published"
-          name="published"
-          value="true"
-          checked={published}
-          onChange={(e) => setPublished(e.target.checked)}
           disabled={isPending}
           className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:ring-blue-400/20"
         />
@@ -219,7 +252,7 @@ export default function PostForm({
         </button>
         <button
           type="submit"
-          disabled={isPending || !title.trim() || !content.trim()}
+          disabled={isPending || !title?.trim() || !content?.trim()}
           className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           {isPending ? (

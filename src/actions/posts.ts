@@ -4,11 +4,18 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { postSchema, paginationSchema } from "@/schemas";
 
 export interface PostActionResult {
   success: boolean;
   error?: string;
   postId?: string;
+  fieldErrors?: {
+    title?: string[];
+    content?: string[];
+    excerpt?: string[];
+    published?: string[];
+  };
 }
 
 export interface PaginatedPostsResult {
@@ -76,42 +83,26 @@ export async function createPostAction(
       redirect("/login");
     }
 
-    // Extract and validate form data
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-    const excerpt = formData.get("excerpt") as string;
-    const published = formData.get("published") === "true";
+    // Extract raw data
+    const rawData = {
+      title: formData.get("title"),
+      content: formData.get("content"),
+      excerpt: formData.get("excerpt") || "",
+      published: formData.get("published") === "true",
+    };
 
-    // Validate required fields
-    if (!title || !content) {
+    // Validate with Zod
+    const validation = postSchema.safeParse(rawData);
+
+    if (!validation.success) {
       return {
         success: false,
-        error: "Title and content are required",
+        error: validation.error.issues[0].message,
+        fieldErrors: validation.error.flatten().fieldErrors,
       };
     }
 
-    // Validate title length
-    if (title.length < 3) {
-      return {
-        success: false,
-        error: "Title must be at least 3 characters long",
-      };
-    }
-
-    if (title.length > 200) {
-      return {
-        success: false,
-        error: "Title must be less than 200 characters",
-      };
-    }
-
-    // Validate content length
-    if (content.length < 10) {
-      return {
-        success: false,
-        error: "Content must be at least 10 characters long",
-      };
-    }
+    const { title, content, excerpt, published = false } = validation.data;
 
     // Generate unique slug
     const baseSlug = generateSlug(title);
@@ -120,10 +111,10 @@ export async function createPostAction(
     // Create the post
     const post = await prisma.post.create({
       data: {
-        title: title.trim(),
+        title,
         slug,
-        content: content.trim(),
-        excerpt: excerpt?.trim() || null,
+        content,
+        excerpt: excerpt || null,
         published,
         publishedAt: published ? new Date() : null,
         authorId: session.userId,
@@ -183,42 +174,26 @@ export async function updatePostAction(
       };
     }
 
-    // Extract and validate form data
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-    const excerpt = formData.get("excerpt") as string;
-    const published = formData.get("published") === "true";
+    // Extract raw data
+    const rawData = {
+      title: formData.get("title"),
+      content: formData.get("content"),
+      excerpt: formData.get("excerpt") || "",
+      published: formData.get("published") === "true",
+    };
 
-    // Validate required fields
-    if (!title || !content) {
+    // Validate with Zod
+    const validation = postSchema.safeParse(rawData);
+
+    if (!validation.success) {
       return {
         success: false,
-        error: "Title and content are required",
+        error: validation.error.issues[0].message,
+        fieldErrors: validation.error.flatten().fieldErrors,
       };
     }
 
-    // Validate title length
-    if (title.length < 3) {
-      return {
-        success: false,
-        error: "Title must be at least 3 characters long",
-      };
-    }
-
-    if (title.length > 200) {
-      return {
-        success: false,
-        error: "Title must be less than 200 characters",
-      };
-    }
-
-    // Validate content length
-    if (content.length < 10) {
-      return {
-        success: false,
-        error: "Content must be at least 10 characters long",
-      };
-    }
+    const { title, content, excerpt, published = false } = validation.data;
 
     // Generate unique slug if title changed
     const baseSlug = generateSlug(title);
@@ -238,10 +213,10 @@ export async function updatePostAction(
     await prisma.post.update({
       where: { id: postId },
       data: {
-        title: title.trim(),
+        title,
         slug,
-        content: content.trim(),
-        excerpt: excerpt?.trim() || null,
+        content,
+        excerpt: excerpt || null,
         published,
         publishedAt,
       },
@@ -389,8 +364,18 @@ export async function getPaginatedPosts(
   pageSize: number = 20
 ): Promise<PaginatedPostsResult> {
   try {
+    // Validate pagination parameters
+    const validation = paginationSchema.safeParse({ page, pageSize });
+
+    if (!validation.success) {
+      console.error("Invalid pagination parameters:", validation.error);
+      return { posts: [], hasMore: false };
+    }
+
+    const { page: validPage, pageSize: validPageSize } = validation.data;
+
     // Calculate skip value for pagination
-    const skip = page * pageSize;
+    const skip = validPage * validPageSize;
 
     // Fetch posts with limit + 1 to check if there are more
     const posts = await prisma.post.findMany({
@@ -409,14 +394,14 @@ export async function getPaginatedPosts(
         publishedAt: "desc",
       },
       skip,
-      take: pageSize + 1, // Fetch one extra to determine if there are more
+      take: validPageSize + 1, // Fetch one extra to determine if there are more
     });
 
     // Check if there are more posts
-    const hasMore = posts.length > pageSize;
+    const hasMore = posts.length > validPageSize;
 
     // Return only the requested number of posts
-    const paginatedPosts = hasMore ? posts.slice(0, pageSize) : posts;
+    const paginatedPosts = hasMore ? posts.slice(0, validPageSize) : posts;
 
     return {
       posts: paginatedPosts,
