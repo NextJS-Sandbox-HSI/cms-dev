@@ -8,6 +8,7 @@ export interface SessionPayload {
   userId: string;
   email: string;
   name: string | null;
+  [key: string]: unknown;
 }
 
 /**

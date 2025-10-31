@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { logoutAction } from "@/actions/auth";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -143,64 +144,188 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Recent Posts */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-          <h2 className="mb-6 text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            Recent Posts
-          </h2>
-          <div className="space-y-4">
-            {recentPosts.map((post) => (
-              <div
-                key={post.id}
-                className="flex items-center justify-between border-b border-zinc-100 pb-4 last:border-0 dark:border-zinc-800"
-              >
-                <div>
-                  <h3 className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {new Date(post.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    post.published
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                      : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-                  }`}
+        {/* Quick Actions */}
+        <div className="mb-8 grid gap-6 sm:grid-cols-2">
+          <Link
+            href="/admin/posts/new"
+            className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 transition-colors group-hover:bg-blue-200 dark:bg-blue-900/20 dark:group-hover:bg-blue-900/30">
+                <svg
+                  className="h-6 w-6 text-blue-600 dark:text-blue-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  {post.published ? "Published" : "Draft"}
-                </span>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
               </div>
-            ))}
-          </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                  Create New Post
+                </h3>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  Write and publish a new blog post
+                </p>
+              </div>
+              <svg
+                className="h-5 w-5 text-zinc-400 transition-transform group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/posts"
+            className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 transition-colors group-hover:bg-purple-200 dark:bg-purple-900/20 dark:group-hover:bg-purple-900/30">
+                <svg
+                  className="h-6 w-6 text-purple-600 dark:text-purple-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                  Manage All Posts
+                </h3>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  View, edit, and manage your posts
+                </p>
+              </div>
+              <svg
+                className="h-5 w-5 text-zinc-400 transition-transform group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </Link>
         </div>
 
-        {/* Coming Soon Section */}
-        <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/50">
-          <svg
-            className="mx-auto mb-4 h-12 w-12 text-zinc-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            More Features Coming Soon
-          </h3>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Post creation, editing, and management features will be added in future updates.
-          </p>
+        {/* Recent Posts */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+              Recent Posts
+            </h2>
+            <Link
+              href="/admin/posts"
+              className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              View All
+            </Link>
+          </div>
+          {recentPosts.length === 0 ? (
+            <div className="py-12 text-center">
+              <svg
+                className="mx-auto mb-4 h-12 w-12 text-zinc-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                No posts yet
+              </h3>
+              <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+                Get started by creating your first blog post
+              </p>
+              <Link
+                href="/admin/posts/new"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Create Your First Post
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="flex items-center justify-between border-b border-zinc-100 pb-4 last:border-0 dark:border-zinc-800"
+                >
+                  <div className="flex-1">
+                    <Link
+                      href={`/admin/posts/edit/${post.id}`}
+                      className="group block"
+                    >
+                      <h3 className="font-medium text-zinc-900 transition-colors group-hover:text-blue-600 dark:text-zinc-50 dark:group-hover:text-blue-400">
+                        {post.title}
+                      </h3>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        {new Date(post.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </Link>
+                  </div>
+                  <span
+                    className={`ml-4 rounded-full px-3 py-1 text-xs font-medium ${
+                      post.published
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                    }`}
+                  >
+                    {post.published ? "Published" : "Draft"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

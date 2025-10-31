@@ -30,19 +30,6 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* Demo Credentials */}
-      <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
-        <p className="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-100">
-          Demo Credentials:
-        </p>
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          Email: <code className="rounded bg-blue-100 px-1.5 py-0.5 font-mono dark:bg-blue-900/50">admin@example.com</code>
-        </p>
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          Password: <code className="rounded bg-blue-100 px-1.5 py-0.5 font-mono dark:bg-blue-900/50">Admin123!</code>
-        </p>
-      </div>
-
       {/* Email Field */}
       <div>
         <label

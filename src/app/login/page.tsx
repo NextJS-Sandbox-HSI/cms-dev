@@ -60,11 +60,6 @@ export default async function LoginPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <p className="text-center text-xs text-zinc-600 dark:text-zinc-400">
-            🔐 Secured with bcrypt password hashing and JWT session management
-          </p>
-        </div>
       </div>
     </div>
   );
